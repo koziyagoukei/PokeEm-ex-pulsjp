@@ -120,6 +120,25 @@ struct
 
 static const u8 sKeypadIconTiles[] = INCGFX_U8("graphics/fonts/keypad_icons.png", ".4bpp");
 
+static u8 sCurGlyphAdvance;
+
+static u32 GetJapaneseGlyphWidth(u8 fontId, u16 glyphId UNUSED)
+{
+    // Japanese halfwidth glyphs are still read from 8px cells.  Advance by
+    // 7px for selected UI fonts to fit English-sized layouts more easily;
+    // dakuten and long vowels may need per-glyph tuning later.
+    switch (fontId)
+    {
+    case FONT_SMALL:
+    case FONT_NORMAL:
+    case FONT_NARROW:
+    case FONT_NARROWER:
+        return 7;
+    default:
+        return 8;
+    }
+}
+
 static const struct FontInfo sFontInfos[] =
 {
     [FONT_SMALL] = {
@@ -978,6 +997,7 @@ u32 CopyGlyphToVRAM(struct TextPrinter *textPrinter)
 static void PrintGlyph(struct TextPrinter *textPrinter)
 {
     u32 cutOffAmount = CopyGlyphToVRAM(textPrinter);
+    u32 glyphAdvance = sCurGlyphAdvance != 0 ? sCurGlyphAdvance : gCurGlyph.width;
 
     //  Handle switching to next sprite here
     if (textPrinter->printerTemplate.type == SPRITE_TEXT_PRINTER
@@ -1000,8 +1020,8 @@ static void PrintGlyph(struct TextPrinter *textPrinter)
     {
         if (textPrinter->minLetterSpacing)
         {
-            textPrinter->printerTemplate.currentX += gCurGlyph.width;
-            u32 width = textPrinter->minLetterSpacing - gCurGlyph.width;
+            textPrinter->printerTemplate.currentX += glyphAdvance;
+            u32 width = textPrinter->minLetterSpacing - glyphAdvance;
             if (width > 0)
             {
                 ClearTextSpan(textPrinter, width);
@@ -1011,11 +1031,13 @@ static void PrintGlyph(struct TextPrinter *textPrinter)
         else
         {
             if (textPrinter->japanese)
-                textPrinter->printerTemplate.currentX += (gCurGlyph.width + textPrinter->printerTemplate.letterSpacing);
+                textPrinter->printerTemplate.currentX += (glyphAdvance + textPrinter->printerTemplate.letterSpacing);
             else
-                textPrinter->printerTemplate.currentX += gCurGlyph.width;
+                textPrinter->printerTemplate.currentX += glyphAdvance;
         }
     }
+
+    sCurGlyphAdvance = 0;
 }
 
 void ClearTextSpan(struct TextPrinter *textPrinter, u32 width)
@@ -1557,6 +1579,7 @@ static u16 RenderText(struct TextPrinter *textPrinter)
             {
                 currChar = *textPrinter->printerTemplate.currentChar++;
                 gCurGlyph.width = DrawKeypadIcon(textPrinter->printerTemplate.windowId, currChar, textPrinter->printerTemplate.currentX, textPrinter->printerTemplate.currentY);
+                sCurGlyphAdvance = 0;
                 textPrinter->printerTemplate.currentX += gCurGlyph.width + textPrinter->printerTemplate.letterSpacing;
                 return RENDER_PRINT;
             }
@@ -1574,6 +1597,7 @@ static u16 RenderText(struct TextPrinter *textPrinter)
                         gCurGlyph.gfxBufferBottom[j] = ((u32 *)(sKeypadIconTiles + ((i + 16 + sKeypadIcons[keypadIconId].tileOffset) * 0x20)))[j];
                     }
                     gCurGlyph.width = 8;
+                    sCurGlyphAdvance = 0;
                     PrintGlyph(textPrinter);
                 }
                 return RENDER_PRINT;
@@ -1584,6 +1608,7 @@ static u16 RenderText(struct TextPrinter *textPrinter)
         }
 
 bool32 useJapanese = textPrinter->japanese || IsJapaneseGlyph(currChar);
+sCurGlyphAdvance = 0;
 
 switch (textPrinter->fontId)
 {
@@ -2222,6 +2247,7 @@ static void DecompressGlyph_Small(u16 glyphId, bool32 isJapanese)
         DecompressGlyphTile(glyphs, gCurGlyph.gfxBufferTop);
         DecompressGlyphTile(glyphs + 0x80, gCurGlyph.gfxBufferBottom);
         gCurGlyph.width = 8;
+        sCurGlyphAdvance = GetJapaneseGlyphWidth(FONT_SMALL, glyphId);
         gCurGlyph.height = 12;
     }
     else
@@ -2249,7 +2275,7 @@ static void DecompressGlyph_Small(u16 glyphId, bool32 isJapanese)
 static u32 GetGlyphWidth_Small(u16 glyphId, bool32 isJapanese)
 {
     if (isJapanese == TRUE)
-        return 8;
+        return GetJapaneseGlyphWidth(FONT_SMALL, glyphId);
     else
         return gFontSmallLatinGlyphWidths[glyphId];
 }
@@ -2264,6 +2290,7 @@ static void DecompressGlyph_Narrow(u16 glyphId, bool32 isJapanese)
         DecompressGlyphTile(glyphs, gCurGlyph.gfxBufferTop);
         DecompressGlyphTile(glyphs + 0x80, gCurGlyph.gfxBufferBottom);
         gCurGlyph.width = 8;
+        sCurGlyphAdvance = GetJapaneseGlyphWidth(FONT_NARROW, glyphId);
         gCurGlyph.height = 15;
     }
     else
@@ -2291,7 +2318,7 @@ static void DecompressGlyph_Narrow(u16 glyphId, bool32 isJapanese)
 static u32 GetGlyphWidth_Narrow(u16 glyphId, bool32 isJapanese)
 {
     if (isJapanese == TRUE)
-        return 8;
+        return GetJapaneseGlyphWidth(FONT_NARROW, glyphId);
     else
         return gFontNarrowLatinGlyphWidths[glyphId];
 }
@@ -2392,6 +2419,7 @@ static void DecompressGlyph_Normal(u16 glyphId, bool32 isJapanese)
         DecompressGlyphTile(glyphs, gCurGlyph.gfxBufferTop);
         DecompressGlyphTile(glyphs + 0x80, gCurGlyph.gfxBufferBottom);
         gCurGlyph.width = 8;
+        sCurGlyphAdvance = GetJapaneseGlyphWidth(FONT_NORMAL, glyphId);
         gCurGlyph.height = 15;
     }
     else
@@ -2419,7 +2447,7 @@ static void DecompressGlyph_Normal(u16 glyphId, bool32 isJapanese)
 static u32 GetGlyphWidth_Normal(u16 glyphId, bool32 isJapanese)
 {
     if (isJapanese == TRUE)
-        return 8;
+        return GetJapaneseGlyphWidth(FONT_NORMAL, glyphId);
     else
         return gFontNormalLatinGlyphWidths[glyphId];
 }
@@ -2445,6 +2473,7 @@ static void DecompressGlyph_Narrower(u16 glyphId, bool32 isJapanese)
         DecompressGlyphTile(glyphs, gCurGlyph.gfxBufferTop);
         DecompressGlyphTile(glyphs + 0x80, gCurGlyph.gfxBufferBottom);
         gCurGlyph.width = 8;
+        sCurGlyphAdvance = GetJapaneseGlyphWidth(FONT_NARROWER, glyphId);
         gCurGlyph.height = 15;
     }
     else
@@ -2472,7 +2501,7 @@ static void DecompressGlyph_Narrower(u16 glyphId, bool32 isJapanese)
 static u32 GetGlyphWidth_Narrower(u16 glyphId, bool32 isJapanese)
 {
     if (isJapanese == TRUE)
-        return 8;
+        return GetJapaneseGlyphWidth(FONT_NARROWER, glyphId);
     else
         return gFontNarrowerLatinGlyphWidths[glyphId];
 }
