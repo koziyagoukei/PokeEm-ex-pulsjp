@@ -21,6 +21,8 @@
 '…' = B0
 '『' = B1
 '』' = B2
+'('  = B1
+')'  = B2
 '「' = B3
 '」' = B4
 '♂' = B5
@@ -253,6 +255,13 @@
 'ッ' = A0
 
 STRING = FD
+
+UP_ARROW    = FF 00
+DOWN_ARROW  = FF 01
+LEFT_ARROW  = FF 02
+RIGHT_ARROW = FF 03
+'+'         = FF 04
+LV          = FF 05
 
 @ string placeholders
 PLAYER         = FD 01
