@@ -39,6 +39,8 @@
 ',' = F3 @ カンマ
 V_D_ARROW   = F4 @ バトルの時の矢印？↕これ
 '&'         = F5 @ ＆
+'%' = F6 @ パーセント。これは絶対作れよ
+'％' = F6
 
 'A' = BB
 'B' = BC
@@ -270,6 +272,11 @@ LEFT_ARROW  = FF 02
 RIGHT_ARROW = FF 03
 '+'         = FF 04
 LV          = FF 05
+'=' = F9 DE
+'＝' = F9 DE
+';' = F9 DB
+'；' = F9 DB
+'_' = F9 D0
 
 @ string placeholders
 PLAYER         = FD 01
