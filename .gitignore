@@ -42,6 +42,7 @@ prefabs.json
 *.diff
 *.sym
 *.js
+*.bak
 /pokeemerald-*.png
 /pokefirered-*.png
 /pokeleafgreen-*.png

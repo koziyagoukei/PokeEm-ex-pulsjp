@@ -47,8 +47,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("はたく"),
         .description = COMPOUND_STRING(
-            "Pounds the foe with\n"
-            "forelegs or tail."),
+            "さわる　ぶつり"),
         .effect = EFFECT_HIT,
         .power = 40,
         .type = TYPE_NORMAL,
