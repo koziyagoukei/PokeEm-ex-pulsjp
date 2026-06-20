@@ -67,7 +67,7 @@ Workspace/
 *.fastSmol
 *.smolTM
 __pycache__
-agbcc
+agbcc/
 .map_version
 # TranslationEditor backups
 *.bak
