@@ -2347,7 +2347,8 @@ static void NamingScreen_Dummy(u8 bg, u8 page)
 static void DrawTextEntry(void)
 {
     u8 i;
-    u8 temp[2];
+    u8 temp[6];
+    u8 ch;
     u16 extraWidth;
     u8 maxChars = GetMaxInputChars();
     u16 x = sNamingScreen->inputCharBaseXPos - 0x40;
@@ -2356,9 +2357,23 @@ static void DrawTextEntry(void)
 
     for (i = 0; i < maxChars; i++)
     {
-        temp[0] = sNamingScreen->textBuffer[i];
-        temp[1] = gText_ExpandedPlaceholder_Empty[0];
-        extraWidth = (IsWideLetter(temp[0]) == TRUE) ? 2 : 0;
+        ch = sNamingScreen->textBuffer[i];
+        extraWidth = (IsWideLetter(ch) == TRUE) ? 2 : 0;
+
+        if (ch >= 0x01 && ch <= 0xA0)
+        {
+            temp[0] = EXT_CTRL_CODE_BEGIN;
+            temp[1] = 0x15; // JPN
+            temp[2] = ch;
+            temp[3] = EXT_CTRL_CODE_BEGIN;
+            temp[4] = 0x16; // ENG
+            temp[5] = EOS;
+        }
+        else
+        {
+            temp[0] = ch;
+            temp[1] = EOS;
+        }
 
         AddTextPrinterParameterized(sNamingScreen->windows[WIN_TEXT_ENTRY], FONT_NORMAL, temp, i * 8 + x + extraWidth, 1, TEXT_SKIP_DRAW, NULL);
     }
@@ -2393,18 +2408,35 @@ static void PrintKeyboardKeys(u8 window, u8 page)
 {
     u8 x;
     u8 y;
-    u8 text[2];
+    u8 ch;
+    u8 text[6];
 
     FillWindowPixelBuffer(window, sFillValues[page]);
 
-    text[1] = EOS;
     for (y = 0; y < KBROW_COUNT; y++)
     {
         for (x = 0; x < KBCOL_COUNT; x++)
         {
-            text[0] = GetDisplayCharAtKeyboardPos(page, x, y);
-            if (text[0] != 0)
+            ch = GetDisplayCharAtKeyboardPos(page, x, y);
+            if (ch != 0)
+            {
+                if (page == KEYBOARD_JAPANESE)
+                {
+                    text[0] = EXT_CTRL_CODE_BEGIN;
+                    text[1] = 0x15; // JPN
+                    text[2] = ch;
+                    text[3] = EXT_CTRL_CODE_BEGIN;
+                    text[4] = 0x16; // ENG
+                    text[5] = EOS;
+                }
+                else
+                {
+                    text[0] = ch;
+                    text[1] = EOS;
+                }
+
                 AddTextPrinterParameterized3(window, FONT_NORMAL, sPageColumnXPos[x] + KEYBOARD_TEXT_X, y * 16 + 1, sKeyboardTextColors[page], 0, text);
+            }
         }
     }
 
