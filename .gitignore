@@ -60,6 +60,7 @@ test/battle/partner_control.h
 tools/compresSmol/compresSmol
 tools/compresSmol/compresSmolTilemap
 tools/aif2pcm/aif2pcm
+Workspace/
 *.Identifier
 *.smol
 *.fastSmol
