@@ -368,6 +368,9 @@ void CreateFacilityMon(const struct TrainerMon *fmon, u16 level, u8 fixedIV, u32
     if (fmon->iv)
         SetMonData(dst, MON_DATA_IVS, &(fmon->iv));
 
+    if (fmon->nickname != NULL)
+        SetMonData(dst, MON_DATA_NICKNAME, fmon->nickname);
+
     if (fmon->isShiny)
     {
         u32 data = TRUE;
