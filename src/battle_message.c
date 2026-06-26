@@ -2410,7 +2410,7 @@ void BufferStringBattle(enum StringID stringID, enum BattlerId battler)
     {
         sBattlerAbilities[i] = gBattleMsgDataPtr->abilities[i];
     }
-    for (i = 0; i < TEXT_BUFF_ARRAY_COUNT; i++)
+    for (i = 0; i < BATTLE_TEXT_BUFF_ARRAY_COUNT; i++)
     {
         gBattleTextBuff1[i] = gBattleMsgDataPtr->textBuffs[0][i];
         gBattleTextBuff2[i] = gBattleMsgDataPtr->textBuffs[1][i];
