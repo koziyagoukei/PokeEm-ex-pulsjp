@@ -221,8 +221,8 @@ static const u8 *const sTransferredToPCMessages[] =
 };
 
 
-static const u8 sText_RivalsName[] = _("RIVAL's NAME?");
-static const u8 sText_AlphabetUpperLower[] = _("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!");
+static const u8 sText_RivalsName[] = _("{JPN}ライバルの なまえは?");
+static const u8 sText_AlphabetUpperLower[] = _("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz！");
 
 static const struct BgTemplate sBgTemplates[] =
 {
@@ -394,24 +394,24 @@ static const u8 sKeyboardChars[KBPAGE_COUNT][KBROW_COUNT][KBCOL_COUNT] =
 {
     [KEYBOARD_JAPANESE] =
     {
-        {JP_HIRA_A, JP_HIRA_I, JP_HIRA_U, JP_HIRA_E, JP_HIRA_O, 0, JP_HIRA_NA, JP_HIRA_NI, JP_HIRA_NU, JP_HIRA_NE, JP_HIRA_NO, 0, JP_HIRA_WA, 0, JP_HIRA_WO, 0, JP_HIRA_N},
-        {JP_HIRA_KA, JP_HIRA_KI, JP_HIRA_KU, JP_HIRA_KE, JP_HIRA_KO, 0, JP_HIRA_HA, JP_HIRA_HI, JP_HIRA_FU, JP_HIRA_HE, JP_HIRA_HO, 0, 0, CHAR_HYPHEN, 0, CHAR_EXCL_MARK, CHAR_QUESTION_MARK},
-        {JP_HIRA_SA, JP_HIRA_SHI, JP_HIRA_SU, JP_HIRA_SE, JP_HIRA_SO, 0, JP_HIRA_YA, 0, JP_HIRA_YU, 0, JP_HIRA_YO},
-        {JP_HIRA_TA, JP_HIRA_CHI, JP_HIRA_TSU, JP_HIRA_TE, JP_HIRA_TO, 0, JP_HIRA_RA, JP_HIRA_RI, JP_HIRA_RU, JP_HIRA_RE, JP_HIRA_RO, 0, JP_HIRA_MA, JP_HIRA_MI, JP_HIRA_MU, JP_HIRA_ME, JP_HIRA_MO},
+        {JP_HIRA_A, JP_HIRA_I, JP_HIRA_U, JP_HIRA_E, JP_HIRA_O, 0, JP_HIRA_NA, JP_HIRA_NI, JP_HIRA_NU, JP_HIRA_NE, JP_HIRA_NO, 0, JP_HIRA_RA, JP_HIRA_RI, JP_HIRA_RU, JP_HIRA_RE, JP_HIRA_RO},
+        {JP_HIRA_KA, JP_HIRA_KI, JP_HIRA_KU, JP_HIRA_KE, JP_HIRA_KO, 0, JP_HIRA_HA, JP_HIRA_HI, JP_HIRA_FU, JP_HIRA_HE, JP_HIRA_HO, 0, JP_HIRA_WA, 0, JP_HIRA_WO, 0, JP_HIRA_N},
+        {JP_HIRA_SA, JP_HIRA_SHI, JP_HIRA_SU, JP_HIRA_SE, JP_HIRA_SO, 0, JP_HIRA_MA, JP_HIRA_MI, JP_HIRA_MU, JP_HIRA_ME, JP_HIRA_MO},
+        {JP_HIRA_TA, JP_HIRA_CHI, JP_HIRA_TSU, JP_HIRA_TE, JP_HIRA_TO, 0, JP_HIRA_YA, 0, JP_HIRA_YU, 0, JP_HIRA_YO, 0, 0, 0, CHAR_EXCL_MARK, CHAR_QUESTION_MARK, CHAR_HYPHEN},
     },
     [KEYBOARD_ENGLISH] =
     {
-        {0},
+        {0, 0, 0, 0, CHAR_0, CHAR_1, CHAR_2, CHAR_3, CHAR_4, CHAR_5, CHAR_6, CHAR_7, CHAR_8, CHAR_9},
         {0, 0, CHAR_A, CHAR_B, CHAR_C, CHAR_D, CHAR_E, CHAR_F, CHAR_G, CHAR_H, CHAR_I, CHAR_J, CHAR_K, CHAR_L, CHAR_M},
         {0, 0, 0, CHAR_N, CHAR_O, CHAR_P, CHAR_Q, CHAR_R, CHAR_S, CHAR_T, CHAR_U, CHAR_V, CHAR_W, CHAR_X, CHAR_Y, CHAR_Z},
         {0},
     },
     [KEYBOARD_SYMBOLS] =
     {
-        {CHAR_0, CHAR_1, CHAR_2, CHAR_3, CHAR_4, CHAR_5, CHAR_6, CHAR_7, CHAR_8, CHAR_9},
-        {CHAR_EXCL_MARK, CHAR_QUESTION_MARK, CHAR_PERIOD, CHAR_COMMA, CHAR_HYPHEN, CHAR_SLASH, CHAR_AMPERSAND, CHAR_PLUS, CHAR_LEFT_PAREN, CHAR_RIGHT_PAREN},
-        {CHAR_SGL_QUOTE_RIGHT, CHAR_SEMICOLON, 0xF0, CHAR_EQUALS, CHAR_LESS_THAN, CHAR_GREATER_THAN, CHAR_PERCENT, CHAR_ELLIPSIS},
-        {CHAR_UP_ARROW, CHAR_DOWN_ARROW, CHAR_LEFT_ARROW, CHAR_RIGHT_ARROW},
+        {0, 0, 0, 0, 0, 0, CHAR_EXCL_MARK, CHAR_QUESTION_MARK, CHAR_PERIOD, CHAR_HYPHEN, CHAR_BULLET, CHAR_ELLIPSIS},
+        {0},
+        {0},
+        {0},
     }
 };
 
@@ -420,7 +420,7 @@ static const u8 sKeyboardActions[KBPAGE_COUNT][KBROW_COUNT][KBCOL_COUNT] =
     [KEYBOARD_JAPANESE] =
     {
         [2] = {[12] = KEY_ACTION_VOICED, [14] = KEY_ACTION_SEMIVOICED, [16] = KEY_ACTION_SMALL},
-        [3] = {[17] = KEY_ACTION_JAPANESE_SHIFT},
+        [3] = {[12] = KEY_ACTION_JAPANESE_SHIFT},
     },
     [KEYBOARD_ENGLISH] =
     {
@@ -518,7 +518,7 @@ static void VBlankCB_NamingScreen(void);
 static void NamingScreen_ShowBgs(void);
 static bool8 IsWideLetter(u8);
 
-static const u8 sText_MoveOkBack[] = _("{ENG}L shift  R {JPN}きりかえ  {ENG}A {JPN}けってい  {ENG}B {JPN}もどる");
+static const u8 sText_MoveOkBack[] = _("{ENG}L {JPN}きりかえ  {ENG}R {JPN}きりかえ  {ENG}A {JPN}けってい  {ENG}B {JPN}もどる");
 
 void DoNamingScreen(u8 templateNum, u8 *destBuffer, u16 monSpeciesOrPlayerGender, u16 monGender, u32 monPersonality, MainCallback returnCallback)
 {
@@ -1422,8 +1422,8 @@ static const u16 sPageSwapPalTags[] = {
     [KBPAGE_SYMBOLS]  = PALTAG_PAGE_SWAP_OTHERS
 };
 
-static const u8 sText_PageSwapEnglish[] = _("ABC");
-static const u8 sText_PageSwapSymbols[] = _("EX");
+static const u8 sText_PageSwapEnglish[] = _("えいじ");
+static const u8 sText_PageSwapSymbols[] = _("きごう");
 static const u8 sText_PageSwapJapanese[] = _("にほん");
 
 static const u8 *const sPageSwapLabels[] =
@@ -2015,7 +2015,7 @@ static u8 GetDisplayCharAtKeyboardPos(u8 page, s16 x, s16 y)
     case KEY_ACTION_SMALL:
         return sNamingScreen->japaneseMode == JAPANESE_MODE_HIRAGANA ? JP_TO_KATA(JP_HIRA_SMALL_A) : JP_HIRA_SMALL_A;
     case KEY_ACTION_VOICED:
-        return sNamingScreen->japaneseMode == JAPANESE_MODE_HIRAGANA ? JP_HIRA_GA : JP_TO_KATA(JP_HIRA_GA);
+        return sNamingScreen->japaneseMode == JAPANESE_MODE_HIRAGANA ? JP_HIRA_DA : JP_TO_KATA(JP_HIRA_DA);
     case KEY_ACTION_SEMIVOICED:
         return sNamingScreen->japaneseMode == JAPANESE_MODE_HIRAGANA ? JP_HIRA_PA : JP_TO_KATA(JP_HIRA_PA);
     }
@@ -2575,7 +2575,7 @@ static const struct NamingScreenTemplate sPlayerNamingScreenTemplate =
     .addGenderIcon = FALSE,
     .initialPage = KBPAGE_JAPANESE,
     .unused = 35,
-    .title = COMPOUND_STRING("YOUR NAME?"),
+    .title = COMPOUND_STRING("{JPN}あなた の なまえは?"),
 };
 
 static const struct NamingScreenTemplate sPCBoxNamingTemplate =
@@ -2586,7 +2586,7 @@ static const struct NamingScreenTemplate sPCBoxNamingTemplate =
     .addGenderIcon = FALSE,
     .initialPage = KBPAGE_JAPANESE,
     .unused = 19,
-    .title = COMPOUND_STRING("BOX NAME?"),
+    .title = COMPOUND_STRING("{JPN}ボックス の なまえは?"),
 };
 
 static const struct NamingScreenTemplate sMonNamingScreenTemplate =
@@ -2597,7 +2597,7 @@ static const struct NamingScreenTemplate sMonNamingScreenTemplate =
     .addGenderIcon = TRUE,
     .initialPage = KBPAGE_JAPANESE,
     .unused = 35,
-    .title = COMPOUND_STRING("{STR_VAR_1}'s nickname?"),
+    .title = COMPOUND_STRING("{JPN}{STR_VAR_1}の ニックネームは?"),
 };
 
 static const struct NamingScreenTemplate sWaldaWordsScreenTemplate =
@@ -2608,7 +2608,7 @@ static const struct NamingScreenTemplate sWaldaWordsScreenTemplate =
     .addGenderIcon = FALSE,
     .initialPage = KBPAGE_JAPANESE,
     .unused = 11,
-    .title = COMPOUND_STRING("Tell him the words."),
+    .title = COMPOUND_STRING("{JPN}おじさんに ことばを おしえよう"),
 };
 
 static const struct NamingScreenTemplate sCodeScreenTemplate =
@@ -2619,7 +2619,7 @@ static const struct NamingScreenTemplate sCodeScreenTemplate =
     .addGenderIcon = FALSE,
     .initialPage = KBPAGE_JAPANESE,
     .unused = 35,
-    .title = COMPOUND_STRING("Enter code:"),
+    .title = COMPOUND_STRING("{JPN}コードを いれよう"),
 };
 
 static const struct NamingScreenTemplate sRivalNamingScreenTemplate =
