@@ -2338,6 +2338,30 @@ void AnimTask_HideSwapSprite(u8 taskId)
 
     u8 spriteId = gBattlerSpriteIds[gBattleAnimAttacker];
 
+    if (BattleAnim_IsContestCutawayActive())
+    {
+        switch (gTasks[taskId].data[0])
+        {
+        case 0:
+            if (spriteId < MAX_SPRITES && gSprites[spriteId].inUse)
+            {
+                gTasks[taskId].data[11] = gSprites[spriteId].x;
+                gSprites[spriteId].x = -64;
+            }
+            gTasks[taskId].data[0]++;
+            break;
+        case 1:
+            if (spriteId < MAX_SPRITES && gSprites[spriteId].inUse)
+            {
+                gSprites[spriteId].x = gTasks[taskId].data[11];
+                gSprites[spriteId].invisible = FALSE;
+            }
+            DestroyAnimVisualTask(taskId);
+            break;
+        }
+        return;
+    }
+
     switch (gTasks[taskId].data[0])
     {
     case 0:
@@ -2449,6 +2473,13 @@ void AnimTask_TransformMon(u8 taskId)
     u8 *src;
     u16 *bgTilemap;
     u16 stretch;
+
+    if (BattleAnim_IsContestCutawayActive())
+    {
+        SetGpuReg(REG_OFFSET_MOSAIC, 0);
+        DestroyAnimVisualTask(taskId);
+        return;
+    }
 
     switch (gTasks[taskId].data[0])
     {
