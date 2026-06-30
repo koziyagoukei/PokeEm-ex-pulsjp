@@ -1707,12 +1707,12 @@ static void RemoveObjectEventInternal(struct ObjectEvent *objectEvent)
     else
     {
         u32 paletteNum = gSprites[objectEvent->spriteId].oam.paletteNum;
-        u16 tileStart;
+        u16 tileStart = TAG_NONE;
         if (OW_GFX_COMPRESS)
             tileStart = gSprites[objectEvent->spriteId].sheetTileStart;
         DestroySprite(&gSprites[objectEvent->spriteId]);
         FieldEffectFreePaletteIfUnused(paletteNum);
-        if (OW_GFX_COMPRESS && tileStart)
+        if (OW_GFX_COMPRESS && tileStart != TAG_NONE)
             FieldEffectFreeTilesIfUnused(tileStart);
     }
 }
@@ -1765,7 +1765,7 @@ u16 LoadSheetGraphicsInfo(const struct ObjectEventGraphicsInfo *info, u16 uuid, 
     {
         // sheet-based gfx
         u32 sheetSpan = GetSpanPerImage(info->oam->shape, info->oam->size);
-        u16 oldTiles = 0;
+        u16 oldTiles = TAG_NONE;
         u16 tileStart;
         bool32 oldInvisible;
         if (tag == TAG_NONE)
@@ -1775,7 +1775,7 @@ u16 LoadSheetGraphicsInfo(const struct ObjectEventGraphicsInfo *info, u16 uuid, 
         {
             oldInvisible = sprite->invisible;
             oldTiles = sprite->sheetTileStart;
-            sprite->sheetTileStart = 0; // mark unused
+            sprite->sheetTileStart = TAG_NONE; // mark unused
             // Note: If sprite was not allocated to use a sheet,
             // the tiles assigned to it will leak here,
             // as its tileNum will be repointed to the new tileStart
@@ -1791,21 +1791,35 @@ u16 LoadSheetGraphicsInfo(const struct ObjectEventGraphicsInfo *info, u16 uuid, 
             // Load, then free, in order to avoid displaying garbage data
             // before sprite's `sheetTileStart` is repointed
             tileStart = LoadCompressedSpriteSheetByTemplate(&template, TILE_SIZE_4BPP << sheetSpan);
-            if (oldTiles)
+            if (oldTiles != TAG_NONE)
             {
                 FieldEffectFreeTilesIfUnused(oldTiles);
                 // We weren't able to load the sheet;
                 // retry (after having freed), and set sprite to invisible until done
-                if (tileStart <= 0)
+                if (GetSpriteTileStartByTag(tag) == TAG_NONE)
                 {
                     if (sprite)
                         sprite->invisible = TRUE;
                     tileStart = LoadCompressedSpriteSheetByTemplate(&template, TILE_SIZE_4BPP << sheetSpan);
                 }
             }
-        // sheet loaded; unload any *other* sheet for sprite
+
+            if (GetSpriteTileStartByTag(tag) == TAG_NONE)
+            {
+                if (sprite)
+                {
+                    sprite->sheetTileStart = TAG_NONE;
+                    sprite->sheetSpan = 0;
+                    sprite->usingSheet = FALSE;
+                    sprite->invisible = TRUE;
+                }
+                return tag;
+            }
+
+            tileStart = GetSpriteTileStartByTag(tag);
         }
-        else if (oldTiles && oldTiles != tileStart)
+        // sheet loaded; unload any *other* sheet for sprite
+        else if (oldTiles != TAG_NONE && oldTiles != tileStart)
         {
             FieldEffectFreeTilesIfUnused(oldTiles);
         }
@@ -1859,7 +1873,14 @@ static u8 TrySetupObjectEventSprite(const struct ObjectEventTemplate *objectEven
         objectEvent->invisible = TRUE;
 
     if (OW_GFX_COMPRESS)
+    {
         spriteTemplate->tileTag = LoadSheetGraphicsInfo(graphicsInfo, objectEvent->graphicsId, NULL);
+        if (spriteTemplate->tileTag != TAG_NONE && GetSpriteTileStartByTag(spriteTemplate->tileTag) == TAG_NONE)
+        {
+            gObjectEvents[objectEventId].active = FALSE;
+            return OBJECT_EVENTS_COUNT;
+        }
+    }
 
     if (objectEvent->graphicsId & OBJ_EVENT_MON && objectEvent->graphicsId & OBJ_EVENT_MON_SHINY)
         objectEvent->shiny = TRUE;
@@ -2021,7 +2042,14 @@ u8 CreateObjectGraphicsSpriteWithTag(u16 graphicsId, void (*callback)(struct Spr
     {
         // Checking only for compressed here so as not to mess with decorations
         if (graphicsInfo->compressed)
+        {
             spriteTemplate->tileTag = LoadSheetGraphicsInfo(graphicsInfo, graphicsId, NULL);
+            if (spriteTemplate->tileTag != TAG_NONE && GetSpriteTileStartByTag(spriteTemplate->tileTag) == TAG_NONE)
+            {
+                Free(spriteTemplate);
+                return MAX_SPRITES;
+            }
+        }
     }
 
     if (spriteTemplate->paletteTag == OBJ_EVENT_PAL_TAG_DYNAMIC)
@@ -3021,7 +3049,14 @@ static void SpawnObjectEventOnReturnToField(u8 objectEventId, s16 x, s16 y)
     spriteTemplate.images = &spriteFrameImage;
 
     if (OW_GFX_COMPRESS)
+    {
         spriteTemplate.tileTag = LoadSheetGraphicsInfo(graphicsInfo, objectEvent->graphicsId, NULL);
+        if (spriteTemplate.tileTag != TAG_NONE && GetSpriteTileStartByTag(spriteTemplate.tileTag) == TAG_NONE)
+        {
+            objectEvent->active = FALSE;
+            return;
+        }
+    }
 
     if (spriteTemplate.paletteTag == OBJ_EVENT_PAL_TAG_DYNAMIC)
     {
