@@ -185,10 +185,10 @@ static void DestroyContestNormalViewSprites(void);
 static void StartContestNormalMonBounce(u8 contestant);
 static bool8 ContestNormalMonBounceDone(u8 contestant);
 static void SpriteCB_ContestNormalMon(struct Sprite *sprite);
-static void BeginContestMoveAnimCutaway(u8 contestant, enum Move effectMove);
+static bool8 BeginContestMoveAnimCutaway(u8 contestant, enum Move effectMove);
 static void EndContestMoveAnimCutaway(u8 contestant);
-static void SaveContestNormalBgTilemaps(void);
-static void RestoreContestNormalBgTilemaps(void);
+static bool8 AllocContestCutawayScratch(void);
+static void FreeContestCutawayScratch(void);
 static void RestoreContestObjectPalettesAfterCutaway(void);
 static void SetContestNormalViewBattlers(void);
 static void SetContestCutawayBattlers(void);
@@ -441,7 +441,6 @@ static EWRAM_DATA struct
     enum Move effectMove;
     enum Move animMove;
 } sContestCutawayAnimSandbox = {0};
-static EWRAM_DATA u8 sContestNormalBgTilemapBackup[CONTESTANT_COUNT][0x1000] = {0};
 static EWRAM_DATA struct {
     u16 dispcnt;
     u16 bgcnt[4];
@@ -2147,29 +2146,29 @@ static void SetContestCutawayBattlers(void)
     gBattleAnimTarget = gBattlerTarget;
 }
 
-static void SaveContestNormalBgTilemaps(void)
+static bool8 AllocContestCutawayScratch(void)
 {
-    s32 i;
+    if (gContestResources->animBgTileBuffer == NULL)
+        gContestResources->animBgTileBuffer = AllocZeroedUnchecked(0x2000);
+    if (gContestResources->cutawayBgTilemap == NULL)
+        gContestResources->cutawayBgTilemap = AllocZeroedUnchecked(0x1000);
 
-    for (i = 0; i < CONTESTANT_COUNT; i++)
+    if (gContestResources->animBgTileBuffer == NULL || gContestResources->cutawayBgTilemap == NULL)
     {
-        if (gContestResources->contestBgTilemaps[i] != NULL)
-            memcpy(sContestNormalBgTilemapBackup[i], gContestResources->contestBgTilemaps[i], 0x1000);
+        FreeContestCutawayScratch();
+        return FALSE;
     }
+
+    return TRUE;
 }
 
-static void RestoreContestNormalBgTilemaps(void)
+static void FreeContestCutawayScratch(void)
 {
-    s32 i;
+    TRY_FREE_AND_SET_NULL(gContestResources->animBgTileBuffer);
+    TRY_FREE_AND_SET_NULL(gContestResources->cutawayBgTilemap);
 
-    for (i = 0; i < CONTESTANT_COUNT; i++)
-    {
-        if (gContestResources->contestBgTilemaps[i] != NULL)
-        {
-            memcpy(gContestResources->contestBgTilemaps[i], sContestNormalBgTilemapBackup[i], 0x1000);
-            CopyBgTilemapBufferToVram(i);
-        }
-    }
+    gBattleAnimBgTileBuffer = NULL;
+    gBattleAnimBgTilemapBuffer = gContestResources->contestBgTilemaps[1];
 }
 
 static void RestoreContestObjectPalettesAfterCutaway(void)
@@ -2181,9 +2180,6 @@ static void SetContestCutawayBgBuffers(void)
 {
     s32 i;
     void *tilemap = gContestResources->cutawayBgTilemap;
-
-    if (tilemap == NULL)
-        tilemap = gContestResources->contestBgTilemaps[1];
 
     gBattleAnimBgTileBuffer = gContestResources->animBgTileBuffer;
     gBattleAnimBgTilemapBuffer = tilemap;
@@ -2522,16 +2518,18 @@ static void SetupContestCutawayAnimContext(u8 contestant, enum Move effectMove, 
 }
 
 
-static void BeginContestMoveAnimCutaway(u8 contestant, enum Move effectMove)
+static bool8 BeginContestMoveAnimCutaway(u8 contestant, enum Move effectMove)
 {
     enum Species pendingSpecies = sContestCutawayAnimSandbox.pendingAttackerSpecies;
     bool8 hasPendingSpecies = sContestCutawayAnimSandbox.hasPendingAttackerSpecies;
+
+    if (!AllocContestCutawayScratch())
+        return FALSE;
 
     ResetContestCutawayAnimSandbox();
     sContestCutawayAnimSandbox.pendingAttackerSpecies = pendingSpecies;
     sContestCutawayAnimSandbox.hasPendingAttackerSpecies = hasPendingSpecies;
     SaveContestCutawayGpuState();
-    SaveContestNormalBgTilemaps();
     sContestCutawayAttackerSpriteId = SPRITE_NONE;
     sContestCutawayTargetSpriteId = SPRITE_NONE;
     SetVBlankCallback(NULL);
@@ -2547,20 +2545,22 @@ static void BeginContestMoveAnimCutaway(u8 contestant, enum Move effectMove)
     sContestCutawayAnimSandbox.animMove = GetContestAnimMove(contestant, effectMove);
     PrepareContestCutawayAnimBattlers(contestant, effectMove);
     SetVBlankCallback(VBlankCB_Contest);
+    return TRUE;
 }
 
 static void RestoreContestBgAfterCutaway(void)
 {
+    s32 i;
+
     ResetPaletteFade();
     gPaletteFade.bufferTransferDisabled = FALSE;
     ScanlineEffect_Clear();
 
     SetupContestGpuRegs();
     InitContestInfoBgs();
-    gBattleAnimBgTileBuffer = gContestResources->animBgTileBuffer;
-    gBattleAnimBgTilemapBuffer = gContestResources->contestBgTilemaps[1];
     LoadContestBgAfterMoveAnim();
-    RestoreContestNormalBgTilemaps();
+    for (i = 0; i < CONTESTANT_COUNT; i++)
+        CopyBgTilemapBufferToVram(i);
     RestoreContestObjectPalettesAfterCutaway();
 
     CopyWindowToVram(WIN_CONTESTANT0_NAME, COPYWIN_GFX);
@@ -2601,6 +2601,7 @@ static void EndContestMoveAnimCutaway(u8 contestant)
     RestoreContestSpritesAfterCutaway();
     CreateContestNormalViewSprites();
     SetContestNormalViewBattlers();
+    FreeContestCutawayScratch();
     SetGpuRegBits(REG_OFFSET_DISPCNT, DISPCNT_OBJ_ON | DISPCNT_WIN0_ON | DISPCNT_WIN1_ON);
     SetVBlankCallback(VBlankCB_Contest);
     Contest_SetBgCopyFlags(0);
@@ -2710,9 +2711,7 @@ static void AllocContestResources(void)
     gContestResources->contestBgTilemaps[3] = AllocZeroed(0x1000);
     gContestResources->boxBlinkTiles1 = AllocZeroed(0x800);
     gContestResources->boxBlinkTiles2 = AllocZeroed(0x800);
-    gContestResources->animBgTileBuffer = AllocZeroed(0x2000);
-    gContestResources->cutawayBgTilemap = AllocZeroed(0x1000);
-    gBattleAnimBgTileBuffer = gContestResources->animBgTileBuffer;
+    gBattleAnimBgTileBuffer = NULL;
     gBattleAnimBgTilemapBuffer = gContestResources->contestBgTilemaps[1];
 }
 
@@ -2734,8 +2733,7 @@ static void FreeContestResources(void)
     FREE_AND_SET_NULL(gContestResources->contestBgTilemaps[3]);
     FREE_AND_SET_NULL(gContestResources->boxBlinkTiles1);
     FREE_AND_SET_NULL(gContestResources->boxBlinkTiles2);
-    FREE_AND_SET_NULL(gContestResources->animBgTileBuffer);
-    FREE_AND_SET_NULL(gContestResources->cutawayBgTilemap);
+    FreeContestCutawayScratch();
     FREE_AND_SET_NULL(gContestResources);
     gBattleAnimBgTileBuffer = NULL;
     gBattleAnimBgTilemapBuffer = NULL;
@@ -3451,7 +3449,15 @@ static void Task_DoAppeals(u8 taskId)
         {
             enum Move effectMove = SanitizeMove(GetContestTurnEffectMove(eContest.currentContestant));
 
-            BeginContestMoveAnimCutaway(eContest.currentContestant, effectMove);
+            if (!BeginContestMoveAnimCutaway(eContest.currentContestant, effectMove))
+            {
+                eContest.moveAnimTurnCount = 0;
+                ClearMoveAnimData(eContest.currentContestant);
+                BeginNormalPaletteFade(PALETTES_ALL, 0, 16, 0, RGB_BLACK);
+                gTasks[taskId].tCounter = 0;
+                gTasks[taskId].tState = APPEALSTATE_CUTAWAY_FADE_IN_RETURN;
+                return;
+            }
             SetupContestCutawayAnimContext(eContest.currentContestant, effectMove, FALSE);
             BeginNormalPaletteFade(PALETTES_ALL, 0, 16, 0, RGB_BLACK);
             gTasks[taskId].tCounter = 0;

@@ -1744,3 +1744,4 @@ EventScript_PalletTown_PlayersHouse_2F_TurnOnPC::
 	.include "data/scripts/wild_encounter.inc"
 
 	.include "data/maps/ultra_frontie_hub/scripts.inc"
+	.include "data/maps/PartyRoamerPark/scripts.inc"

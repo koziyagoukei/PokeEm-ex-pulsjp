@@ -638,14 +638,13 @@ gSpecials::
 	def_special SeafoamIslandsB4F_CurrentDumpsPlayerOnLand
 	def_special UpdateTrainerCardPhotoIcons
 	def_special StickerManGetBragFlags
-<<<<<<< HEAD
 	def_special CheckAddCoins
-        def_special Special_OpenFrontierPokemonCreator
-        def_special Special_SetupFrontierHubState
-        def_special Special_OpenFrontierItemGiver
-        def_special Special_SetFrontierAiNormal
-        def_special Special_SetFrontierAiHard
-        def_special Special_SetFrontierAiStrongest
-=======
-	def_special CheckAddCoins
->>>>>>> origin/master
+	def_special Special_OpenFrontierPokemonCreator
+	def_special Special_SetupFrontierHubState
+	def_special Special_OpenFrontierItemGiver
+	def_special Special_SetFrontierAiNormal
+	def_special Special_SetFrontierAiHard
+	def_special Special_SetFrontierAiStrongest
+	def_special Special_SpawnPartyRoamerMons
+	def_special Special_RefreshPartyRoamerMons
+	def_special Special_BufferPartyRoamerMessage
